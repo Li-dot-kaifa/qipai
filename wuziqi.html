@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>微信五子棋</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #f0f0f0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            touch-action: none;
+        }
+
+        #chessboard {
+            background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQAQMAAAAlPW0iAAAAA3NCSVQICAjb4U/gAAAABlBMVEX///////9VfPVsAAAAJElEQVQImWNgYGBgAAAABQABh6FO1AAAAABJRU5ErkJggg==');
+            margin: 10px auto;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+        }
+
+        #status {
+            font-size: 18px;
+            color: #333;
+            margin: 10px;
+            font-family: "Microsoft YaHei", sans-serif;
+        }
+
+        button {
+            padding: 8px 20px;
+            background: #07c160;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            margin: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="status">黑棋回合</div>
+    <canvas id="chessboard"></canvas>
+    <button onclick="resetGame()">重新开始</button>
+
+<script>
+const canvas = document.getElementById('chessboard');
+const ctx = canvas.getContext('2d');
+const size = Math.min(window.innerWidth - 40, 400);
+let isBlack = true;
+let gameOver = false;
+let board = [];
+
+// 初始化棋盘
+function init() {
+    canvas.width = size;
+    canvas.height = size;
+    ctx.strokeStyle = '#333';
+    
+    // 初始化二维数组
+    board = Array(15).fill().map(() => Array(15).fill(0));
+    
+    // 绘制棋盘
+    const cellSize = size / 15;
+    for (let i = 0; i < 15; i++) {
+        ctx.beginPath();
+        ctx.moveTo(cellSize/2 + i*cellSize, cellSize/2);
+        ctx.lineTo(cellSize/2 + i*cellSize, size - cellSize/2);
+        ctx.stroke();
+        
+        ctx.beginPath();
+        ctx.moveTo(cellSize/2, cellSize/2 + i*cellSize);
+        ctx.lineTo(size - cellSize/2, cellSize/2 + i*cellSize);
+        ctx.stroke();
+    }
+}
+
+// 绘制棋子
+function drawPiece(x, y, isBlack) {
+    const cellSize = size / 15;
+    ctx.beginPath();
+    ctx.arc(cellSize/2 + x*cellSize, cellSize/2 + y*cellSize, cellSize*0.4, 0, Math.PI*2);
+    ctx.fillStyle = isBlack ? '#000' : '#fff';
+    ctx.fill();
+    ctx.strokeStyle = '#333';
+    ctx.stroke();
+}
+
+// 检查胜利
+function checkWin(x, y) {
+    const directions = [[1,0], [0,1], [1,1], [1,-1]];
+    const color = board[x][y];
+
+    for (let [dx, dy] of directions) {
+        let count = 1;
+        let i = x + dx, j = y + dy;
+        while (i >= 0 && i < 15 && j >= 0 && j < 15 && board[i][j] === color) {
+            count++;
+            i += dx;
+            j += dy;
+        }
+        
+        i = x - dx; j = y - dy;
+        while (i >= 0 && i < 15 && j >= 0 && j < 15 && board[i][j] === color) {
+            count++;
+            i -= dx;
+            j -= dy;
+        }
+        
+        if (count >= 5) return true;
+    }
+    return false;
+}
+
+// 点击事件处理
+canvas.addEventListener('click', (e) => {
+    if (gameOver) return;
+    
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const cellSize = size / 15;
+    
+    const i = Math.round((x - cellSize/2) / cellSize);
+    const j = Math.round((y - cellSize/2) / cellSize);
+    
+    if (i >=0 && i <15 && j >=0 && j <15 && board[i][j] === 0) {
+        board[i][j] = isBlack ? 1 : 2;
+        drawPiece(i, j, isBlack);
+        
+        if (checkWin(i, j)) {
+            gameOver = true;
+            document.getElementById('status').textContent = `${isBlack ? '黑棋' : '白棋'}获胜！`;
+        } else {
+            isBlack = !isBlack;
+            document.getElementById('status').textContent = `${isBlack ? '黑棋' : '白棋'}回合`;
+        }
+    }
+});
+
+function resetGame() {
+    ctx.clearRect(0, 0, size, size);
+    isBlack = true;
+    gameOver = false;
+    document.getElementById('status').textContent = '黑棋回合';
+    init();
+}
+
+// 初始化游戏
+init();
+</script>
+</body>
+</html>
